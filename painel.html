@@ -1,0 +1,70 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Painel do cardápio</title>
+<meta name="robots" content="noindex">
+<style>
+*{box-sizing:border-box}body{margin:0;font:15px/1.4 system-ui,sans-serif;background:#f3f1f1;color:#1d1517}
+.top{position:sticky;top:0;z-index:5;background:#1d1517;color:#fff;padding:10px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.top b{margin-right:auto}.top small{opacity:.7}
+main{max-width:860px;margin:auto;padding:16px}
+section{background:#fff;border:1px solid #e3dddd;border-radius:10px;padding:16px;margin-bottom:16px}
+h2{margin:0 0 12px;font-size:1.1rem}label{display:block;font-size:.82rem;color:#756a6c;margin:8px 0 3px}
+input,textarea,select{width:100%;padding:9px;border:1px solid #d9d2d2;border-radius:7px;font:inherit}
+input[type=color]{padding:2px;height:38px}input[type=checkbox]{width:auto}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 12px}
+button{font:inherit;border:1px solid #cfc7c7;background:#fff;border-radius:7px;padding:8px 12px;cursor:pointer}
+button.p{background:#4a1420;color:#fff;border-color:#4a1420}button.d{color:#b3261e}
+.it{border:1px solid #e3dddd;border-radius:8px;padding:12px;margin-top:10px;display:grid;grid-template-columns:96px 1fr;gap:12px}
+.it.off{opacity:.6}.ph{width:96px;height:96px;border-radius:8px;background:#eee center/cover;display:grid;place-items:center;color:#999;font-size:.75rem;text-align:center}
+.cat{display:flex;gap:8px;align-items:center}.cat input{font-weight:700}
+.ck{display:flex;gap:6px;align-items:center;margin-top:10px}.ck label{margin:0}
+:focus-visible{outline:3px solid #e0a43a}
+</style></head><body>
+<div class="top"><b>Painel do cardápio</b><small id="st">Sem alterações</small>
+<button onclick="window.open('index.html?preview=1')">Visualizar</button>
+<button class="p" onclick="dl()">Baixar cardapio.json</button>
+<button onclick="$('#up').click()">Abrir arquivo</button><input id="up" type="file" accept=".json" hidden onchange="imp(this)">
+<button onclick="rs()">Descartar rascunho</button></div>
+<main id="app"></main>
+<script>
+const $=s=>document.querySelector(s),K='cardapio_rascunho';
+const E=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let D;
+const save=()=>{localStorage.setItem(K,JSON.stringify(D));$('#st').textContent='Rascunho salvo às '+new Date().toLocaleTimeString('pt-BR')+'. Baixe o arquivo para publicar.'};
+async function init(){const s=localStorage.getItem(K);try{D=s?JSON.parse(s):await(await fetch('cardapio.json?'+Date.now())).json()}catch(e){D={config:{nome:'Meu restaurante',whatsapp:'',cor:'#4a1420',bairros:[]},categorias:[]}}draw()}
+function draw(){
+  const c=D.config;
+  $('#app').innerHTML=`<section><h2>Dados do restaurante</h2><div class="g">
+  <div><label>Nome</label><input value="${E(c.nome)}" oninput="sc('nome',this.value)"></div>
+  <div><label>Frase de destaque</label><input value="${E(c.slogan)}" oninput="sc('slogan',this.value)"></div>
+  <div><label>WhatsApp (com 55 e DDD)</label><input value="${E(c.whatsapp)}" inputmode="numeric" oninput="sc('whatsapp',this.value)"></div>
+  <div><label>Link do Instagram</label><input value="${E(c.instagram)}" oninput="sc('instagram',this.value)"></div>
+  <div><label>Horário de atendimento</label><input value="${E(c.horario)}" oninput="sc('horario',this.value)"></div>
+  <div><label>Cor principal</label><input type="color" value="${E(c.cor||'#4a1420')}" oninput="sc('cor',this.value)"></div></div>
+  <label>Taxas de entrega (um bairro por linha, no formato Bairro;valor)</label>
+  <textarea rows="3" oninput="sb(this.value)">${(c.bairros||[]).map(b=>b.nome+';'+b.taxa).join('\n')}</textarea></section>`+
+  D.categorias.map((k,ci)=>`<section><div class="cat"><input value="${E(k.nome)}" oninput="D.categorias[${ci}].nome=this.value;save()" aria-label="Nome da categoria">
+  <button onclick="mv(${ci},-1)" aria-label="Subir categoria">↑</button><button onclick="mv(${ci},1)" aria-label="Descer categoria">↓</button><button class="d" onclick="delC(${ci})">Excluir</button></div>
+  ${k.itens.map((i,ii)=>`<div class="it ${i.disponivel===false?'off':''}"><div><div class="ph" id="ph${ci}_${ii}" style="${i.foto?`background-image:url('${E(i.foto)}')`:''}">${i.foto?'':'Sem foto'}</div>
+  <label style="cursor:pointer;color:#4a1420">Trocar foto<input type="file" accept="image/*" hidden onchange="foto(${ci},${ii},this)"></label></div>
+  <div><label>Nome</label><input value="${E(i.nome)}" oninput="si(${ci},${ii},'nome',this.value)">
+  <label>Descrição</label><textarea rows="2" oninput="si(${ci},${ii},'desc',this.value)">${E(i.desc)}</textarea>
+  <div class="g"><div><label>Preço (R$)</label><input type="number" step="0.5" min="0" value="${i.preco}" oninput="si(${ci},${ii},'preco',+this.value)"></div>
+  <div><label>Preço promocional (0 = sem promoção)</label><input type="number" step="0.5" min="0" value="${i.promo||0}" oninput="si(${ci},${ii},'promo',+this.value)"></div></div>
+  <div class="ck"><input type="checkbox" id="d${ci}_${ii}" ${i.disponivel!==false?'checked':''} onchange="si(${ci},${ii},'disponivel',this.checked);draw()"><label for="d${ci}_${ii}">Disponível hoje</label>
+  <button class="d" style="margin-left:auto" onclick="delI(${ci},${ii})">Excluir prato</button></div></div></div>`).join('')}
+  <p><button onclick="addI(${ci})">+ Adicionar prato</button></p></section>`).join('')+`<button class="p" onclick="addC()">+ Nova categoria</button>`;
+}
+const sc=(k,v)=>{D.config[k]=v;save()};
+const sb=v=>{D.config.bairros=v.split('\n').map(l=>l.split(';')).filter(a=>a[0].trim()).map(a=>({nome:a[0].trim(),taxa:parseFloat((a[1]||'0').replace(',','.'))||0}));save()};
+const si=(c,i,k,v)=>{D.categorias[c].itens[i][k]=v;save()};
+const id=()=>'x'+Date.now().toString(36)+Math.floor(Math.random()*999);
+const addC=()=>{D.categorias.push({id:id(),nome:'Nova categoria',itens:[]});save();draw()};
+const delC=c=>{if(confirm('Excluir a categoria e todos os pratos dela?')){D.categorias.splice(c,1);save();draw()}};
+const mv=(c,d)=>{const a=D.categorias,n=c+d;if(n<0||n>=a.length)return;[a[c],a[n]]=[a[n],a[c]];save();draw()};
+const addI=c=>{D.categorias[c].itens.push({id:id(),nome:'Novo prato',desc:'',preco:0,promo:0,foto:'',disponivel:true});save();draw()};
+const delI=(c,i)=>{if(confirm('Excluir este prato?')){D.categorias[c].itens.splice(i,1);save();draw()}};
+function foto(c,i,inp){const f=inp.files[0];if(!f)return;const im=new Image();im.onload=()=>{const s=Math.min(1,640/Math.max(im.width,im.height)),cv=document.createElement('canvas');cv.width=im.width*s;cv.height=im.height*s;cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);si(c,i,'foto',cv.toDataURL('image/jpeg',.75));draw()};im.src=URL.createObjectURL(f)}
+function dl(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(D,null,2)],{type:'application/json'}));a.download='cardapio.json';a.click()}
+function imp(inp){const f=inp.files[0];if(!f)return;f.text().then(t=>{try{D=JSON.parse(t);save();draw()}catch(e){alert('Arquivo inválido.')}})}
+function rs(){if(confirm('Descartar alterações e voltar ao cardápio publicado?')){localStorage.removeItem(K);init();$('#st').textContent='Rascunho descartado'}}
+init();
+</script></body></html>

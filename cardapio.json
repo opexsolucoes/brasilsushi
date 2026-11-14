@@ -1,0 +1,33 @@
+{
+  "config": {
+    "nome": "Brasil Sushi",
+    "slogan": "Sushi, do seu jeito.",
+    "whatsapp": "5588999999999",
+    "instagram": "https://www.instagram.com/brasil_sushi_ipu/",
+    "horario": "Ter a dom, das 18h às 23h",
+    "cor": "#4a1420",
+    "bairros": [
+      { "nome": "Centro", "taxa": 4 },
+      { "nome": "Outros bairros", "taxa": 7 }
+    ]
+  },
+  "categorias": [
+    { "id": "c1", "nome": "Entradas", "itens": [
+      { "id": "i1", "nome": "Peixe empanado", "desc": "Fatias de peixe temperado no alho e empanado na farinha panko", "preco": 23, "promo": 0, "foto": "", "disponivel": true },
+      { "id": "i2", "nome": "Camarão empanado", "desc": "Camarão temperado e empanado na farinha panko.", "preco": 30, "promo": 26, "foto": "", "disponivel": true },
+      { "id": "i3", "nome": "Batata frita", "desc": "", "preco": 20, "promo": 0, "foto": "", "disponivel": true }
+    ]},
+    { "id": "c2", "nome": "Temaki", "itens": [
+      { "id": "i4", "nome": "Temaki de salmão com cream cheese", "desc": "Shari, salmão e cream cheese. Cru ou frito.", "preco": 26, "promo": 0, "foto": "", "disponivel": true },
+      { "id": "i5", "nome": "Temaki misto", "desc": "Shari, salmão, camarão e cream cheese. Cru ou frito.", "preco": 28, "promo": 0, "foto": "", "disponivel": false }
+    ]},
+    { "id": "c3", "nome": "Combinados", "itens": [
+      { "id": "i6", "nome": "Combinado 20 peças", "desc": "4 trouxinhas, 4 joy geleia, 4 uramaki skin, 4 sushi salmão e 4 hot", "preco": 45, "promo": 0, "foto": "", "disponivel": true },
+      { "id": "i7", "nome": "Combinado 30 peças", "desc": "4 sashimi, 4 trouxinhas, 4 uramaki skin, 4 joy camarão, 4 uramaki pasta de salmão, 5 sushi e 5 hots", "preco": 70, "promo": 0, "foto": "", "disponivel": true }
+    ]},
+    { "id": "c4", "nome": "Bebidas", "itens": [
+      { "id": "i8", "nome": "Coca-Cola lata", "desc": "", "preco": 5, "promo": 0, "foto": "", "disponivel": true },
+      { "id": "i9", "nome": "Água sem gás", "desc": "", "preco": 3, "promo": 0, "foto": "", "disponivel": true }
+    ]}
+  ]
+}

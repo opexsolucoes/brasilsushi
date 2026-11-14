@@ -1,0 +1,101 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cardápio</title>
+<style>
+:root{--c:#4a1420;--ink:#1d1517;--mut:#756a6c;--ln:#e8e2e3;--bg:#f7f4f4}
+*{box-sizing:border-box}body{margin:0;font:16px/1.45 system-ui,sans-serif;color:var(--ink);background:var(--bg);padding-bottom:84px}
+button,input,select,textarea{font:inherit}
+header{background:var(--c);color:#fff;padding:44px 20px 28px}
+header>div,main,.w{max-width:820px;margin:auto}
+h1{font:700 clamp(2rem,7vw,3.2rem)/1.05 Georgia,serif;margin:0 0 8px}
+header p{margin:4px 0;opacity:.85}header a{color:#fff}
+nav{position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--ln);padding:10px 16px}
+nav .w{display:flex;gap:8px;overflow-x:auto;align-items:center}
+nav input{flex:0 0 150px;padding:8px 12px;border:1px solid var(--ln);border-radius:20px}
+.chip{flex:none;border:1px solid var(--ln);background:#fff;border-radius:20px;padding:7px 14px;cursor:pointer}
+.chip.on{background:var(--c);color:#fff;border-color:var(--c)}
+main{padding:8px 16px}h2{font:700 1.3rem Georgia,serif;margin:26px 0 10px;color:var(--c)}
+.it{display:flex;gap:14px;background:#fff;border:1px solid var(--ln);border-radius:10px;padding:12px;margin-bottom:10px}
+.it img{width:92px;height:92px;object-fit:cover;border-radius:8px;flex:none}
+.it div{flex:1;min-width:0}.it h3{margin:0;font-size:1.02rem}.it p{margin:2px 0 8px;color:var(--mut);font-size:.9rem}
+.pr{font-weight:700}.old{text-decoration:line-through;color:var(--mut);font-weight:400;margin-right:6px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.btn{background:var(--c);color:#fff;border:0;border-radius:8px;padding:9px 16px;cursor:pointer;font-weight:600}
+.btn:disabled{background:#c9c2c3;cursor:not-allowed}
+.q{display:flex;align-items:center;gap:10px}.q button{width:32px;height:32px;border-radius:50%;border:1px solid var(--ln);background:#fff;cursor:pointer;font-size:1.1rem}
+#bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px;background:var(--bg);border-top:1px solid var(--ln);display:none}
+#bar .btn{width:100%;max-width:820px;display:flex;justify-content:space-between;margin:auto;padding:14px 18px}
+#dr{position:fixed;inset:0;background:#0007;display:none;z-index:20}
+#dr>div{background:#fff;max-width:520px;margin:0 auto;height:100%;overflow:auto;padding:18px}
+#dr label{display:block;margin:10px 0 4px;font-size:.9rem;color:var(--mut)}
+#dr input,#dr select,#dr textarea{width:100%;padding:10px;border:1px solid var(--ln);border-radius:8px}
+.seg{display:flex;gap:8px}.seg label{flex:1;margin:0;border:1px solid var(--ln);border-radius:8px;padding:10px;text-align:center;color:var(--ink);cursor:pointer}
+.seg input{display:none}.seg input:checked+span{font-weight:700;color:var(--c)}
+footer{text-align:center;color:var(--mut);padding:24px;font-size:.85rem}
+:focus-visible{outline:3px solid #e0a43a;outline-offset:2px}
+</style></head><body>
+<header><div><h1 id="nm"></h1><p id="sl"></p><p id="hr"></p><p><a id="ig" target="_blank" rel="noopener">Instagram</a></p></div></header>
+<nav><div class="w"><input id="q" type="search" placeholder="Buscar prato" aria-label="Buscar prato"><span id="ch" style="display:contents"></span></div></nav>
+<main id="m"></main><footer id="ft"></footer>
+<div id="bar"><button class="btn" onclick="op()"><span id="bn"></span><span id="bt"></span></button></div>
+<div id="dr"><div>
+<div class="row"><h2 style="margin:0">Seu pedido</h2><button class="chip" onclick="cl()">Fechar</button></div>
+<div id="ci"></div>
+<label>Seu nome</label><input id="fn" autocomplete="name">
+<label>Como deseja receber?</label>
+<div class="seg"><label><input type="radio" name="tp" value="Retirada" checked onchange="tot()"><span>Retirada</span></label><label><input type="radio" name="tp" value="Entrega" onchange="tot()"><span>Entrega</span></label></div>
+<div id="ent" style="display:none"><label>Bairro</label><select id="fb" onchange="tot()"></select><label>Endereço completo</label><input id="fe"></div>
+<label>Pagamento</label><select id="fp"><option>Pix</option><option>Cartão</option><option>Dinheiro</option></select>
+<label>Observações (opcional)</label><textarea id="fo" rows="2"></textarea>
+<p class="row"><span>Itens</span><b id="t1"></b></p><p class="row"><span>Entrega</span><b id="t2"></b></p><p class="row"><span>Total</span><b id="t3"></b></p>
+<button class="btn" style="width:100%;padding:14px" onclick="send()">Enviar pedido pelo WhatsApp</button>
+<p style="font-size:.8rem;color:var(--mut)">A mensagem só é enviada depois que você confirmar no WhatsApp.</p>
+</div></div>
+<script>
+const $=s=>document.querySelector(s),R=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const E=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let D,cart={},cat='all',all={};
+const P=i=>i.promo>0&&i.promo<i.preco?i.promo:i.preco;
+async function init(){
+  let d=null;
+  if(location.search.includes('preview')){try{d=JSON.parse(localStorage.getItem('cardapio_rascunho'))}catch(e){}}
+  if(!d){try{d=await(await fetch('cardapio.json?'+Date.now())).json()}catch(e){$('#m').innerHTML='<p>Não foi possível carregar o cardápio. Tente novamente em instantes.</p>';return}}
+  D=d;const c=D.config;document.documentElement.style.setProperty('--c',c.cor||'#4a1420');
+  document.title=c.nome+' | Cardápio';$('#nm').textContent=c.nome;$('#sl').textContent=c.slogan||'';$('#hr').textContent=c.horario||'';
+  c.instagram?$('#ig').href=c.instagram:$('#ig').remove();$('#ft').textContent='© '+c.nome;
+  D.categorias.forEach(k=>k.itens.forEach(i=>all[i.id]=i));
+  $('#fb').innerHTML=(c.bairros||[]).map((b,n)=>`<option value="${n}">${E(b.nome)} (${R(b.taxa)})</option>`).join('');
+  draw();
+}
+function draw(){
+  const q=$('#q').value.trim().toLowerCase();
+  $('#ch').innerHTML=[['all','Todos'],...D.categorias.map(k=>[k.id,k.nome])].map(([id,n])=>`<button class="chip ${cat==id?'on':''}" onclick="cat='${id}';draw()">${E(n)}</button>`).join('');
+  $('#m').innerHTML=D.categorias.filter(k=>cat=='all'||k.id==cat).map(k=>{
+    const its=k.itens.filter(i=>!q||(i.nome+i.desc).toLowerCase().includes(q));
+    return its.length?`<h2>${E(k.nome)}</h2>`+its.map(i=>`<div class="it">${i.foto?`<img src="${E(i.foto)}" alt="${E(i.nome)}" loading="lazy">`:''}<div><h3>${E(i.nome)}</h3>${i.desc?`<p>${E(i.desc)}</p>`:''}
+    <div class="row"><span class="pr">${P(i)<i.preco?`<span class="old">${R(i.preco)}</span>`:''}${R(P(i))}</span>
+    ${i.disponivel===false?'<button class="btn" disabled>Esgotado</button>':cart[i.id]?`<span class="q"><button onclick="ch('${i.id}',-1)" aria-label="Remover um">−</button>${cart[i.id]}<button onclick="ch('${i.id}',1)" aria-label="Adicionar um">+</button></span>`:`<button class="btn" onclick="ch('${i.id}',1)">Adicionar</button>`}</div></div></div>`).join(''):'';
+  }).join('')||'<p>Nenhum prato encontrado.</p>';
+  const n=Object.values(cart).reduce((a,b)=>a+b,0),s=sub();
+  $('#bar').style.display=n?'block':'none';$('#bn').textContent=`Ver pedido (${n})`;$('#bt').textContent=R(s);
+}
+const sub=()=>Object.entries(cart).reduce((a,[id,n])=>a+P(all[id])*n,0);
+function ch(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];draw();if($('#dr').style.display=='block')list()}
+const ent=()=>document.querySelector('[name=tp]:checked').value=='Entrega';
+const fee=()=>ent()?(D.config.bairros?.[$('#fb').value]?.taxa||0):0;
+function list(){
+  $('#ci').innerHTML=Object.keys(cart).map(id=>`<div class="row" style="margin:8px 0"><span>${E(all[id].nome)}<br><small>${R(P(all[id]))}</small></span><span class="q"><button onclick="ch('${id}',-1)" aria-label="Remover um">−</button>${cart[id]}<button onclick="ch('${id}',1)" aria-label="Adicionar um">+</button></span></div>`).join('')||'<p>Seu pedido está vazio.</p>';
+  if(!Object.keys(cart).length)cl();tot();
+}
+function tot(){$('#ent').style.display=ent()?'block':'none';$('#t1').textContent=R(sub());$('#t2').textContent=R(fee());$('#t3').textContent=R(sub()+fee())}
+function op(){$('#dr').style.display='block';list()}
+function cl(){$('#dr').style.display='none'}
+function send(){
+  const nome=$('#fn').value.trim();if(!nome)return alert('Informe seu nome.');
+  if(ent()&&!$('#fe').value.trim())return alert('Informe o endereço de entrega.');
+  const b=D.config.bairros?.[$('#fb').value];
+  let t=`*Novo pedido - ${D.config.nome}*\nCliente: ${nome}\n\n`+Object.keys(cart).map(id=>`${cart[id]}x ${all[id].nome} - ${R(P(all[id])*cart[id])}`).join('\n');
+  t+=`\n\nItens: ${R(sub())}\n${ent()?`Entrega (${b?.nome}): ${R(fee())}\nEndereço: ${$('#fe').value}\n`:'Retirada no local\n'}*Total: ${R(sub()+fee())}*\nPagamento: ${$('#fp').value}`;
+  if($('#fo').value.trim())t+=`\nObs: ${$('#fo').value}`;
+  open('https://wa.me/'+String(D.config.whatsapp).replace(/\D/g,'')+'?text='+encodeURIComponent(t),'_blank');
+}
+$('#q').oninput=draw;init();
+</script></body></html>
